@@ -88,6 +88,8 @@ The library uses a **plumbing/water** metaphor:
 - **Sink**: Where values flow into your UI and cause updates
 - **Well**: Deeper reservoir that draws from multiple pipes at once
 - **HubListener**: Valve that triggers actions without affecting the flow
+- **ComputedPipe**: Junction that combines flow from multiple pipes into one
+- **AsyncPipe**: Pipe that handles async water sources with loading/error states
 
 ---
 
@@ -667,6 +669,67 @@ class _MyWidgetState extends State<MyWidget> {
 ```
 
 **Auto-dispose behavior**: When the last widget unsubscribes (widget unmounts), the Pipe automatically disposes itself.
+
+---
+
+### 5. ComputedPipe - Derived Reactive State
+
+Create reactive values that automatically update when their dependencies change:
+
+```dart
+class CartHub extends Hub {
+  late final items = pipe<List<Item>>([]);
+  late final taxRate = pipe(0.08);
+
+  // Automatically recomputes when items or taxRate change
+  late final total = computedPipe<double>(
+    dependencies: [items, taxRate],
+    compute: () {
+      final subtotal = items.value.fold(0.0, (sum, item) => sum + item.price);
+      return subtotal * (1 + taxRate.value);
+    },
+  );
+}
+```
+
+Unlike getters, `ComputedPipe` can be subscribed to with `Sink` and only recomputes when dependencies actually change.
+
+> See the **Computed Values** example in the example app for more details.
+
+---
+
+### 6. AsyncPipe - Async Operations
+
+Handle async operations with built-in loading, data, and error states:
+
+```dart
+class UserHub extends Hub {
+  late final user = asyncPipe<User>(() => api.fetchUser());
+  
+  void refresh() => user.refresh();
+}
+```
+
+Use `AsyncValue` pattern matching in your UI:
+
+```dart
+Sink<AsyncValue<User>>(
+  pipe: hub.user,
+  builder: (context, state) => state.when(
+    loading: () => CircularProgressIndicator(),
+    data: (user) => Text(user.name),
+    onError: (error, _) => Text('Error: $error'),
+  ),
+)
+```
+
+**Key features:**
+- `asyncPipe()` - creates async state, loads immediately by default
+- `asyncPipe(..., immediate: false)` - load on demand with `refresh()`
+- `state.when()` - pattern match loading/data/error states
+- `setData()`, `setError()` - manual state updates for optimistic UI
+
+> See the **Async Operations** examples in the example app - includes both basic usage and advanced Either/Repository patterns.
 
 ---
 
@@ -1266,6 +1329,87 @@ HubListener({
 MultiHubProvider({
   required List<Hub Function()> hubs,
   required Widget child,
+})
+```
+
+---
+
+### ComputedPipe<T>
+
+```dart
+// Constructor
+ComputedPipe({
+  required List<Pipe> dependencies,
+  required T Function() compute,
+})
+
+// Properties
+T value                     // Get computed value (read-only)
+bool disposed               // Check if disposed
+List<Pipe> dependencies     // List of dependency pipes
+
+// Hub helper
+@protected ComputedPipe<T> computedPipe<T>({
+  required List<Pipe> dependencies,
+  required T Function() compute,
+})
+```
+
+---
+
+### AsyncPipe<T>
+
+```dart
+// Constructors
+AsyncPipe(Future<T> Function() futureFactory, {bool immediate = true})
+AsyncPipe.withInitialValue(T initialValue, Future<T> Function() futureFactory)
+
+// Properties
+AsyncValue<T> value         // Current async state
+bool isLoading              // Is loading or refreshing
+bool hasData                // Has data
+bool hasError               // Has error
+T? dataOrNull               // Data if available
+Object? errorOrNull         // Error if available
+
+// Methods
+Future<void> refresh()      // Re-fetch data
+Future<void> reset()        // Clear and re-fetch
+void setData(T data)        // Manually set data
+void setError(Object error) // Manually set error
+void setLoading()           // Manually set loading
+
+// Hub helper
+@protected AsyncPipe<T> asyncPipe<T>(
+  Future<T> Function() futureFactory, 
+  {bool immediate = true}
+)
+```
+
+---
+
+### AsyncValue<T>
+
+```dart
+// Sealed class with subtypes:
+AsyncLoading<T>             // Loading state
+AsyncData<T>(T value)       // Success state
+AsyncError<T>(Object error) // Error state
+AsyncRefreshing<T>(T prev)  // Refreshing with previous data
+
+// Properties
+bool isLoading              // Is loading
+bool hasData                // Has data
+bool hasError               // Has error
+T? valueOrNull              // Data if available
+Object? errorOrNull         // Error if available
+T requireValue              // Data or throws
+
+// Methods
+R when<R>({
+  required R Function() loading,
+  required R Function(T value) data,
+  required R Function(Object error, StackTrace? stack) onError,
 })
 ```
 

@@ -29,6 +29,32 @@ class HubWithManualPipes extends Hub {
   late final registered = registerPipe(Pipe(0));
 }
 
+class HubWithComputedPipe extends Hub {
+  late final a = pipe(5);
+  late final b = pipe(10);
+
+  late final sum = computedPipe<int>(
+    dependencies: [a, b],
+    compute: () => a.value + b.value,
+  );
+}
+
+class HubWithAsyncPipe extends Hub {
+  late final data = asyncPipe<int>(
+    () async {
+      await Future.delayed(const Duration(milliseconds: 10));
+      return 42;
+    },
+  );
+}
+
+class HubWithAsyncPipeDelayed extends Hub {
+  late final data = asyncPipe<int>(
+    () async => 42,
+    immediate: false,
+  );
+}
+
 void main() {
   group('Hub', () {
     test('should auto-register pipes created during construction', () {
@@ -143,6 +169,114 @@ void main() {
 
       expect(hub.count.value, 42);
       expect(hub.name.value, 'answer');
+
+      hub.dispose();
+    });
+  });
+
+  group('Hub with ComputedPipe', () {
+    test('should register computed pipe and compute initial value', () {
+      final hub = HubWithComputedPipe();
+
+      expect(hub.sum.value, 15); // 5 + 10
+
+      hub.dispose();
+    });
+
+    test('should recompute when dependency changes', () {
+      final hub = HubWithComputedPipe();
+
+      expect(hub.sum.value, 15);
+
+      hub.a.value = 20;
+      expect(hub.sum.value, 30); // 20 + 10
+
+      hub.b.value = 5;
+      expect(hub.sum.value, 25); // 20 + 5
+
+      hub.dispose();
+    });
+
+    test('should dispose computed pipe with hub', () {
+      final hub = HubWithComputedPipe();
+
+      final sum = hub.sum;
+
+      hub.dispose();
+
+      expect(sum.disposed, true);
+      expect(hub.a.disposed, true);
+      expect(hub.b.disposed, true);
+    });
+  });
+
+  group('Hub with AsyncPipe', () {
+    test('should register async pipe', () {
+      final hub = HubWithAsyncPipe();
+
+      expect(hub.data.value, isA<AsyncLoading>());
+      expect(hub.data.isLoading, true);
+
+      hub.dispose();
+    });
+
+    test('should load data asynchronously', () async {
+      final hub = HubWithAsyncPipe();
+
+      expect(hub.data.isLoading, true);
+
+      await Future.delayed(const Duration(milliseconds: 50));
+
+      expect(hub.data.hasData, true);
+      expect(hub.data.dataOrNull, 42);
+
+      hub.dispose();
+    });
+
+    test('should not load immediately when immediate is false', () async {
+      final hub = HubWithAsyncPipeDelayed();
+
+      expect(hub.data.isLoading, true);
+
+      // Still loading after delay because immediate is false
+      await Future.delayed(const Duration(milliseconds: 50));
+      expect(hub.data.value, isA<AsyncLoading>());
+
+      // Refresh to start loading
+      await hub.data.refresh();
+      expect(hub.data.dataOrNull, 42);
+
+      hub.dispose();
+    });
+
+    test('should dispose async pipe with hub', () {
+      final hub = HubWithAsyncPipe();
+
+      final data = hub.data;
+
+      hub.dispose();
+
+      expect(data.disposed, true);
+    });
+
+    test('async pipe should support setData', () {
+      final hub = HubWithAsyncPipeDelayed();
+
+      hub.data.setData(100);
+
+      expect(hub.data.hasData, true);
+      expect(hub.data.dataOrNull, 100);
+
+      hub.dispose();
+    });
+
+    test('async pipe should support setError', () {
+      final hub = HubWithAsyncPipeDelayed();
+
+      hub.data.setError(Exception('test error'));
+
+      expect(hub.data.hasError, true);
+      expect(hub.data.errorOrNull, isA<Exception>());
 
       hub.dispose();
     });

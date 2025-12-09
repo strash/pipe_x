@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-[1.6.0]
+## [1.7.0]
+
+### Added
+- **`ComputedPipe`**: Reactive derived state that auto-updates when dependencies change
+- **`AsyncPipe`**: Handle async operations with built-in loading/data/error states
+- **`AsyncValue`**: Sealed class for representing async states (`AsyncLoading`, `AsyncData`, `AsyncError`, `AsyncRefreshing`)
+- Hub helpers: `computedPipe()` and `asyncPipe()` methods for easy creation
+- Comprehensive unit tests for all new features
+
+## [1.6.0]
 
 ### Performance
 - Much faster notification path
@@ -154,6 +163,7 @@ Updated to Webp Logo
 - Multiple example implementations demonstrating all features
 - Best practices and patterns guide
 
+[1.7.0]: https://github.com/navaneethkrishnaindeed/pipe_x/releases/tag/v1.7.0
 [1.6.0]: https://github.com/navaneethkrishnaindeed/pipe_x/releases/tag/v1.6.0
 [1.5.0]: https://github.com/navaneethkrishnaindeed/pipe_x/releases/tag/v1.5.0
 [1.4.4]: https://github.com/navaneethkrishnaindeed/pipe_x/releases/tag/v1.4.4

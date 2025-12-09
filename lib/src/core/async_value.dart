@@ -93,9 +93,12 @@ sealed class AsyncValue<T> {
   }) {
     final self = this;
     return switch (self) {
-      AsyncLoading() || AsyncRefreshing() => loading != null ? loading() : orElse(),
+      AsyncLoading() ||
+      AsyncRefreshing() =>
+        loading != null ? loading() : orElse(),
       AsyncData(:final value) => data != null ? data(value) : orElse(),
-      AsyncError(:final error, :final stackTrace) => onError != null ? onError(error, stackTrace) : orElse(),
+      AsyncError(:final error, :final stackTrace) =>
+        onError != null ? onError(error, stackTrace) : orElse(),
     };
   }
 
@@ -104,9 +107,11 @@ sealed class AsyncValue<T> {
     final self = this;
     return switch (self) {
       AsyncLoading() => AsyncLoading<R>(),
-      AsyncRefreshing(:final previousValue) => AsyncRefreshing(mapper(previousValue)),
+      AsyncRefreshing(:final previousValue) =>
+        AsyncRefreshing(mapper(previousValue)),
       AsyncData(:final value) => AsyncData(mapper(value)),
-      AsyncError(:final error, :final stackTrace) => AsyncError(error, stackTrace),
+      AsyncError(:final error, :final stackTrace) =>
+        AsyncError(error, stackTrace),
     };
   }
 
@@ -132,7 +137,8 @@ sealed class AsyncValue<T> {
     final self = this;
     return switch (self) {
       AsyncLoading() => 'AsyncLoading()',
-      AsyncRefreshing(:final previousValue) => 'AsyncRefreshing($previousValue)',
+      AsyncRefreshing(:final previousValue) =>
+        'AsyncRefreshing($previousValue)',
       AsyncData(:final value) => 'AsyncData($value)',
       AsyncError(:final error) => 'AsyncError($error)',
     };
@@ -144,7 +150,8 @@ final class AsyncLoading<T> extends AsyncValue<T> {
   const AsyncLoading();
 
   @override
-  bool operator ==(Object other) => identical(this, other) || other is AsyncLoading<T>;
+  bool operator ==(Object other) =>
+      identical(this, other) || other is AsyncLoading<T>;
 
   @override
   int get hashCode => runtimeType.hashCode;
@@ -158,7 +165,8 @@ final class AsyncData<T> extends AsyncValue<T> {
   const AsyncData(this.value);
 
   @override
-  bool operator ==(Object other) => identical(this, other) || (other is AsyncData<T> && other.value == value);
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is AsyncData<T> && other.value == value);
 
   @override
   int get hashCode => value.hashCode;
@@ -175,7 +183,9 @@ final class AsyncError<T> extends AsyncValue<T> {
   const AsyncError(this.error, [this.stackTrace]);
 
   @override
-  bool operator ==(Object other) => identical(this, other) || (other is AsyncError<T> && other.error == error);
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AsyncError<T> && other.error == error);
 
   @override
   int get hashCode => error.hashCode;
@@ -201,7 +211,9 @@ final class AsyncRefreshing<T> extends AsyncValue<T> {
   T? get valueOrNull => previousValue;
 
   @override
-  bool operator ==(Object other) => identical(this, other) || (other is AsyncRefreshing<T> && other.previousValue == previousValue);
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AsyncRefreshing<T> && other.previousValue == previousValue);
 
   @override
   int get hashCode => previousValue.hashCode;

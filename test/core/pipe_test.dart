@@ -79,21 +79,21 @@ void main() {
       final pipe = Pipe<int>(5);
       pipe.dispose();
 
-      expect(() => pipe.value, throwsStateError);
+      expect(() => pipe.value, throwsAssertionError);
     });
 
     test('should throw error when setting disposed pipe value', () {
       final pipe = Pipe<int>(5);
       pipe.dispose();
 
-      expect(() => pipe.value = 10, throwsStateError);
+      expect(() => pipe.value = 10, throwsAssertionError);
     });
 
     test('should throw error when pumping disposed pipe', () {
       final pipe = Pipe<int>(5);
       pipe.dispose();
 
-      expect(() => pipe.pump(10), throwsStateError);
+      expect(() => pipe.pump(10), throwsAssertionError);
     });
 
     test('should track subscriber count', () {

@@ -33,7 +33,8 @@ abstract class Hub {
   final Map<String, Pipe> _pipes = {};
   int _autoRegisterCounter = 0;
   final List<VoidCallback> _hubListeners = [];
-  final Map<VoidCallback, Map<Pipe, void Function(dynamic)>> _listenerToPipeCallbacks = {};
+  final Map<VoidCallback, Map<Pipe, void Function(dynamic)>>
+      _listenerToPipeCallbacks = {};
 
   /// Creates a hub
   Hub();
@@ -129,7 +130,7 @@ abstract class Hub {
   /// - The computation is trivial (e.g., `bool get isEmpty => items.value.isEmpty`)
   /// - You don't need to subscribe to it directly
   @protected
-  ComputedPipe<T> computed<T>({
+  ComputedPipe<T> computedPipe<T>({
     required List<Pipe> dependencies,
     required T Function() compute,
     String? key,
